@@ -1,0 +1,866 @@
+# =====================================================================
+# PYTHON QUEST (GUI) - ACT102 Fundamentals of Programming
+# Pick a lesson, pass its quiz, earn a [PASSED] badge.
+# Log in with your Gmail. Pass all 7 lessons and your certificate is
+# sent to that Gmail automatically.
+#
+# Run it with:   python python_quest_gui.py
+# Needs only Python's built-in tkinter (no installs).
+# =====================================================================
+
+import tkinter as tk
+from tkinter import ttk, messagebox, scrolledtext
+import smtplib
+import ssl
+import json
+import os
+from email.message import EmailMessage
+from datetime import date
+
+# Progress of every user is saved here (next to this script).
+# Only name, Gmail address and passed lessons are saved - NEVER the password.
+SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "python_quest_progress.json")
+
+
+def gmail_connect(address, password):
+    """Log in to Gmail and return the connected server.
+    Tries port 465 (SSL) first, then port 587 (STARTTLS), because many
+    networks and antivirus programs block one of them.
+    Raises smtplib.SMTPAuthenticationError if the password is wrong, or
+    ConnectionError if Gmail cannot be reached either way."""
+    ctx = ssl.create_default_context()
+    problems = []
+
+    try:
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx, timeout=20)
+        server.login(address, password)
+        return server
+    except smtplib.SMTPAuthenticationError:
+        raise
+    except (OSError, smtplib.SMTPException) as err:
+        problems.append(f"port 465: {err}")
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=20)
+        server.ehlo()
+        server.starttls(context=ctx)
+        server.ehlo()
+        server.login(address, password)
+        return server
+    except smtplib.SMTPAuthenticationError:
+        raise
+    except (OSError, smtplib.SMTPException) as err:
+        problems.append(f"port 587: {err}")
+
+    raise ConnectionError("Gmail could not be reached (" + "; ".join(problems) + ")")
+
+# ---------------------------------------------------------------------
+# LESSON DATA
+# Question format: (prompt, options_or_None, correct_answer, hint)
+#   - options list  -> multiple choice; correct_answer is "1", "2", ...
+#   - None          -> typed answer; correct_answer is a list of accepted
+#                      answers (compared in lowercase, spaces ignored)
+# ---------------------------------------------------------------------
+LESSONS = [
+    {
+        "title": "Introduction to Programming",
+        "notes": """A programming language is a special language that
+computers understand and use to perform tasks.
+
+Python      - easy to learn; data science, AI, automation
+C / C++     - high performance; system programming, games
+PHP         - web development; works with databases
+Java        - 'write once, run anywhere'; enterprise, Android apps
+JavaScript  - the core language of the web (interactive sites)
+Ruby        - simple and productive; web frameworks like Rails
+
+Python was created by Guido van Rossum in 1991.
+It is high-level, interpreted, and general-purpose.
+
+Why learn Python?
+  - Simple and easy to learn
+  - Readable syntax (almost like plain English)
+  - Versatile (AI, web, automation, data science, games)
+  - Huge community
+
+Tools: PyCharm, Visual Studio Code (VS Code), Jupyter Notebook
+""",
+        "questions": [
+            ("Who created Python?", ["Bill Gates", "Guido van Rossum", "Steve Jobs"],
+             "2", "Read 'Python was created by...'"),
+            ("Which language is the core language of the web?",
+             ["JavaScript", "C++", "Ruby"], "1",
+             "It adds interactivity to websites."),
+            ("Which language is 'write once, run anywhere'?",
+             ["PHP", "Python", "Java"], "3",
+             "It is used for enterprise systems and Android apps."),
+        ],
+    },
+    {
+        "title": "Python Basic Syntax",
+        "notes": """Syntax = the rules for writing a program correctly.
+
+RULE 1: Python is CASE-SENSITIVE.
+Name and name are two different identifiers.
+    Name = "Maria"
+    name = "Juan"
+
+RULE 2: Python uses INDENTATION, not curly braces,
+to define blocks such as inside an if statement.
+
+  CORRECT:                 WRONG:
+  age = 18                 age = 18
+  if age >= 18:            if age >= 18:
+      print("Adult")       print("Adult")   <-- IndentationError
+
+print() shows information on the screen.
+Strings need quotes. Numbers can be printed directly.
+    print("Hello, World!")
+    print(100)
+
+COMMENTS: Python ignores them.
+  Single-line:  # This is a comment
+  Multi-line:   \"\"\" This is a multi-line comment \"\"\"
+""",
+        "questions": [
+            ("Are Name and name the same thing in Python?", ["Yes", "No"],
+             "2", "See RULE 1 (case-sensitive)."),
+            ("Type the symbol that starts a single-line comment.", None,
+             ["#"], "See the COMMENTS part of the lesson."),
+            ("What does Python use to define code blocks?",
+             ["Semicolons", "Indentation", "Curly braces"], "2", "See RULE 2."),
+        ],
+    },
+    {
+        "title": "Variables and Data Types",
+        "notes": """A variable is a named storage location that holds data.
+The value inside a variable can change.
+
+Data types:
+  int   - whole numbers           age = 20
+  float - numbers with a decimal  grade = 89.5
+  str   - text inside quotes      name = "Maria"
+  bool  - True or False           is_enrolled = True
+
+Variable naming rules:
+  - Must start with a letter or an underscore (_value)
+  - Cannot start with a number (1number is invalid)
+  - Cannot contain spaces or special characters like @ # $ %
+""",
+        "questions": [
+            ("Which variable name is valid?", ["1number", "my name", "_value"],
+             "3", "See 'Variable naming rules'."),
+            ("In  grade = 89.5  what is the data type?\n(type: int, float, str or bool)",
+             None, ["float"], "It has a decimal point."),
+            ("In  is_enrolled = True  what is the data type?", None,
+             ["bool"], "True and False are special values."),
+            ('In  name = "Maria"  what is the data type?', None,
+             ["str"], "It is text inside quotes."),
+        ],
+    },
+    {
+        "title": "Arithmetic Operators",
+        "notes": """Operator   Operation              Example    Result
+   +       Addition               5 + 3      8
+   -       Subtraction            10 - 4     6
+   *       Multiplication         7 * 2      14
+   /       Division (float)       15 / 3     5.0
+   //      Floor division         17 // 3    5
+   %       Modulus (remainder)    10 % 3     1
+   **      Exponent (power)       2 ** 3     8
+
+Python follows PEMDAS:
+Parentheses, Exponents, Multiplication/Division, Addition/Subtraction
+  2 + 3 * 4   = 14
+  (2 + 3) * 4 = 20
+""",
+        "questions": [
+            ("What is  17 // 3 ?", None, ["5"],
+             "// is floor division (whole number only)."),
+            ("What is  10 % 3 ?", None, ["1"], "% gives the remainder."),
+            ("What is  2 ** 3 ?", None, ["8"], "** is the power: 2 * 2 * 2."),
+            ("What is  2 + 3 * 4 ?", None, ["14"],
+             "PEMDAS - multiply before you add."),
+        ],
+    },
+    {
+        "title": "Basic Input and Output",
+        "notes": """input() gets information from the user.
+It always gives you a string (str). To do math,
+convert it with int() or float().
+
+The code from the lecture:
+  name = input("Enter your name: ")
+  age = int(input("Enter your age: "))
+  grade = float(input("Enter your final grade: "))
+  print(f"Student: {name}, Age: {age}, Grade: {grade}")
+""",
+        "questions": [
+            ("What data type does input() always give you?\n(int, float or str)",
+             None, ["str"], "By default, all input is a string."),
+            ('Fill in the blank to read a whole number:\n  age = ____(input("Enter your age: "))',
+             None, ["int"], "See the age line in the lecture code."),
+            ('Fill in the blank to read a decimal number:\n  grade = ____(input("Enter your final grade: "))',
+             None, ["float"], "See the grade line in the lecture code."),
+        ],
+    },
+    {
+        "title": "Conditions and Logic",
+        "notes": """Conditional statements let a program make decisions.
+
+Comparison operators:
+  ==  equal to          !=  not equal to
+  >   greater than      <   less than
+  >=  greater or equal  <=  less or equal
+
+Logical operators:
+  and - True only if ALL conditions are True
+        True and True  = True
+        True and False = False
+  or  - True if AT LEAST ONE condition is True
+        False or True  = True
+        False or False = False
+  not - reverses the result
+        not True  = False
+        not False = True
+
+The if - elif - else code from the lecture (with age = 15):
+  if age < 0 or age > 100:
+      print("Invalid input")
+  elif age <= 12:
+      print("Category: Child")
+  elif age <= 19:
+      print("Category: Teenager")
+  elif age <= 59:
+      print("Category: Adult")
+  else:
+      print("Category: Senior Citizen")
+
+Result: Category: Teenager
+""",
+        "questions": [
+            ("Which operator means 'not equal to'?", ["==", "!=", ">="],
+             "2", "See 'Comparison operators'."),
+            ("What is  True and False ?", ["True", "False"], "2",
+             "'and' needs ALL conditions to be True."),
+            ("What is  False or True ?", ["True", "False"], "1",
+             "'or' needs AT LEAST ONE True."),
+            ("What is  not True ?", ["True", "False"], "2",
+             "'not' reverses the result."),
+            ("With the lecture code, age = 15 gives which category?",
+             ["Child", "Adult", "Teenager"], "3",
+             "Check which 'elif' is True first."),
+        ],
+    },
+    {
+        "title": "Loops",
+        "notes": """Iteration = repeating a block of code.
+  for loop   - when you know how many times to repeat
+  while loop - repeats as long as its condition is True
+
+range(start, stop, step)  -  the stop number is NOT included.
+
+for num in range(1, 6):       # numbers 1 to 5
+    print(num)                # 1 2 3 4 5
+
+for num in range(1, 10, 2):   # odd numbers 1 to 9
+    print(num)                # 1 3 5 7 9
+
+for num in range(5, 0, -1):   # countdown 5 to 1
+    print(num)                # 5 4 3 2 1
+
+while True runs forever until a break statement is hit.
+The running total code from the lecture:
+  total = 0
+  while True:
+      num = int(input("Enter an integer (0 to stop): "))
+      if num == 0:
+          break
+      total += num
+  print(f"Total: {total}")
+""",
+        "questions": [
+            ("What does  for num in range(1, 6)  print?",
+             ["1 to 5", "1 to 6", "0 to 5"], "1",
+             "The stop number is not included."),
+            ("What does  range(1, 10, 2)  give?",
+             ["2, 4, 6, 8", "1, 3, 5, 7, 9", "1 to 10"], "2",
+             "Start at 1, then step by 2."),
+            ("Which keyword stops a  while True  loop?", None, ["break"],
+             "It is in the running total code."),
+            ("In the running total code, you type 4, then 6, then 10,\nthen 0. What is the Total?",
+             None, ["20"], "0 stops the loop and is not added."),
+            ("Type the range() that counts down from 10 to 1.\nExample format: range(1, 6)",
+             None, ["range(10,0,-1)"], "See the countdown 5 to 1 example."),
+        ],
+    },
+]
+
+TOTAL = len(LESSONS)
+
+# Colors / fonts
+BG = "#f4f6fb"
+CARD = "#ffffff"
+ACCENT = "#3b6fd4"
+GREEN = "#2e9e5b"
+RED = "#c9453f"
+GOLD = "#c9962b"
+FONT = ("Segoe UI", 11)
+FONT_B = ("Segoe UI", 11, "bold")
+FONT_H = ("Segoe UI", 18, "bold")
+MONO = ("Consolas", 11)
+
+
+def get_rank(passed):
+    if passed == TOTAL:
+        return "Python Master"
+    if passed >= 4:
+        return "Coder"
+    if passed >= 1:
+        return "Apprentice"
+    return "Newbie"
+
+
+class PythonQuest(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Python Quest - ACT102")
+        self.geometry("820x640")
+        self.minsize(720, 560)
+        self.configure(bg=BG)
+
+        self.player = ""
+        self.email = ""              # the Gmail the user logged in with
+        self.app_password = ""       # kept in memory only, never saved
+        self.logged_in = False       # True once Gmail login was verified
+        self.cert_sent = False       # True once the certificate was emailed
+        self.passed = set()          # indexes of passed lessons
+        self.lesson_i = 0
+        self.q_i = 0
+        self.score = 0
+        self.answer_var = tk.StringVar()
+
+        style = ttk.Style(self)
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+        style.configure("TButton", font=FONT, padding=8)
+        style.configure("Accent.TButton", font=FONT_B, padding=8,
+                        background=ACCENT, foreground="white")
+        style.map("Accent.TButton", background=[("active", "#2f5bb3")])
+
+        self.container = tk.Frame(self, bg=BG)
+        self.container.pack(fill="both", expand=True, padx=20, pady=16)
+        self.show_welcome()
+
+    # ---------------- helpers ----------------
+    def clear(self):
+        for w in self.container.winfo_children():
+            w.destroy()
+
+    def heading(self, text, color=ACCENT):
+        tk.Label(self.container, text=text, font=FONT_H, fg=color,
+                 bg=BG).pack(anchor="w", pady=(0, 10))
+
+    def button(self, parent, text, command, accent=False, **pack):
+        b = ttk.Button(parent, text=text, command=command,
+                       style="Accent.TButton" if accent else "TButton")
+        b.pack(**pack)
+        return b
+
+    # ---------------- saving progress ----------------
+    def load_all(self):
+        try:
+            with open(SAVE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return {}
+
+    def save_progress(self):
+        if not self.email:
+            return
+        data = self.load_all()
+        data[self.email] = {"name": self.player,
+                            "passed": sorted(self.passed),
+                            "cert_sent": self.cert_sent}
+        try:
+            with open(SAVE_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except OSError:
+            pass   # saving is a bonus; the game still works without it
+
+    def load_progress(self):
+        saved = self.load_all().get(self.email)
+        if saved:
+            self.passed = {i for i in saved.get("passed", []) if 0 <= i < TOTAL}
+            self.cert_sent = bool(saved.get("cert_sent", False))
+            if not self.player:
+                self.player = saved.get("name", "")
+            return True
+        return False
+
+    # ---------------- login ----------------
+    def show_welcome(self):
+        self.clear()
+        tk.Label(self.container, text="PYTHON QUEST", font=("Segoe UI", 30, "bold"),
+                 fg=ACCENT, bg=BG).pack(pady=(24, 4))
+        tk.Label(self.container, text="Learn Python. Pass quizzes. Win badges.",
+                 font=FONT, bg=BG).pack()
+        tk.Label(self.container, text="Log in with your Gmail",
+                 font=("Segoe UI", 14, "bold"), bg=BG).pack(pady=(24, 8))
+
+        form = tk.Frame(self.container, bg=BG)
+        form.pack()
+        form.columnconfigure(1, weight=1)
+
+        def field(r, label, show=None):
+            tk.Label(form, text=label, font=FONT, bg=BG).grid(
+                row=r, column=0, sticky="w", pady=4, padx=(0, 10))
+            e = ttk.Entry(form, font=FONT, width=34, show=show)
+            e.grid(row=r, column=1, sticky="ew", pady=4)
+            e.bind("<Return>", lambda ev: self.login())
+            return e
+
+        self.name_entry = field(0, "Your name:")
+        self.email_entry = field(1, "Gmail address:")
+        self.pw_entry = field(2, "Gmail App Password:", show="*")
+        self.name_entry.focus()
+
+        tk.Label(self.container,
+                 text="Your certificate will be emailed to this Gmail automatically\n"
+                      "when you pass all 7 lessons. Use a 16-character Google App Password\n"
+                      "(Google Account > Security > 2-Step Verification > App passwords),\n"
+                      "not your normal password. It is never saved.",
+                 font=("Segoe UI", 9), fg="#555", bg=BG, justify="center").pack(pady=8)
+
+        self.login_status = tk.Label(self.container, text="", font=FONT_B, bg=BG,
+                                     wraplength=640, justify="center")
+        self.login_status.pack(pady=4)
+        self.login_btn = ttk.Button(self.container, text="Log in", style="Accent.TButton",
+                                    command=self.login)
+        self.login_btn.pack(pady=6)
+        ttk.Button(self.container, text="Play without email",
+                   command=self.play_offline).pack()
+
+    def login(self):
+        name = self.name_entry.get().strip()
+        email = self.email_entry.get().strip().lower()
+        password = self.pw_entry.get().replace(" ", "")
+        if not name:
+            self.login_status.config(text="Please type your name.", fg=RED)
+            return
+        if not (email.endswith("@gmail.com") or email.endswith("@googlemail.com")) \
+                or " " in email or email.count("@") != 1:
+            self.login_status.config(text="Please enter a valid Gmail address "
+                                          "(like name@gmail.com).", fg=RED)
+            return
+        if len(password) != 16:
+            self.login_status.config(
+                text=f"That password has {len(password)} characters. A Google App Password "
+                     "is exactly 16 letters (not your normal Gmail password).", fg=RED)
+            return
+
+        # Check the Gmail login really works before letting the user in
+        self.login_btn.config(state="disabled")
+        self.login_status.config(text="Checking your Gmail login...", fg="#555")
+        self.update_idletasks()
+        try:
+            gmail_connect(email, password).quit()
+        except smtplib.SMTPAuthenticationError:
+            self.login_status.config(
+                text="Login failed. Use a Google App Password "
+                     "(2-Step Verification must be on), not your normal password.", fg=RED)
+            self.login_btn.config(state="normal")
+            return
+        except Exception as err:
+            self.login_status.config(
+                text=f"Could not reach Gmail: {err}\nCheck your internet, or use "
+                     "'Play without email'.", fg=RED)
+            self.login_btn.config(state="normal")
+            return
+
+        self.player = name
+        self.email = email
+        self.app_password = password
+        self.logged_in = True
+        self.passed = set()
+        self.cert_sent = False
+        returning = self.load_progress()
+        self.player = name           # keep the name typed this time
+        self.save_progress()
+        if returning:
+            messagebox.showinfo("Welcome back",
+                                f"Welcome back, {name}!\nYou have passed "
+                                f"{len(self.passed)} of {TOTAL} lessons.")
+        self.show_menu()
+
+    def play_offline(self):
+        name = self.name_entry.get().strip()
+        if not name:
+            self.login_status.config(text="Please type your name first.", fg=RED)
+            return
+        self.player = name
+        self.email = ""
+        self.app_password = ""
+        self.logged_in = False
+        self.passed = set()
+        self.cert_sent = False
+        self.show_menu()
+
+    def logout(self):
+        self.player = ""
+        self.email = ""
+        self.app_password = ""
+        self.logged_in = False
+        self.passed = set()
+        self.cert_sent = False
+        self.show_welcome()
+
+    # ---------------- sending the certificate ----------------
+    def send_certificate_email(self, to_addr, from_addr, password):
+        """Returns (True, "") if sent, or (False, "reason")."""
+        today = date.today().strftime("%B %d, %Y")
+        text = (f"CERTIFICATE OF COMPLETION\n\n{self.player}\n"
+                f"passed all {TOTAL} lessons of the ACT102 Python Quest\n"
+                f"and is now a PYTHON MASTER.\n\nDate: {today}\n")
+        html = f"""
+        <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:30px;
+                    border:6px double #c9962b;text-align:center;background:#fffdf4">
+          <h1 style="color:#c9962b;margin-top:0">CERTIFICATE OF COMPLETION</h1>
+          <p>This certifies that</p>
+          <h2 style="font-size:30px;margin:8px 0"><i>{self.player}</i></h2>
+          <p>passed all {TOTAL} lessons of the<br><b>ACT102 Python Quest</b><br>and is now a</p>
+          <h2 style="color:#3b6fd4">&#9733; PYTHON MASTER &#9733;</h2>
+          <p style="color:#777">{today}</p>
+        </div>"""
+        msg = EmailMessage()
+        msg["Subject"] = "Your Python Quest Certificate"
+        msg["From"] = from_addr
+        msg["To"] = to_addr
+        msg.set_content(text)
+        msg.add_alternative(html, subtype="html")
+        try:
+            server = gmail_connect(from_addr, password)
+            try:
+                server.send_message(msg)
+            finally:
+                try:
+                    server.quit()
+                except smtplib.SMTPException:
+                    pass
+            return True, ""
+        except smtplib.SMTPAuthenticationError:
+            return False, ("Login failed. Use a Google App Password "
+                           "(2-Step Verification must be on).")
+        except Exception as err:
+            return False, f"Could not send: {err}"
+
+    # ---------------- menu ----------------
+    def show_menu(self):
+        self.clear()
+        n = len(self.passed)
+        self.heading("LESSON MENU")
+        tk.Label(self.container,
+                 text=f"Player: {self.player}     Rank: {get_rank(n)}     Passed: {n}/{TOTAL}",
+                 font=FONT_B, bg=BG).pack(anchor="w", pady=(0, 2))
+        who = f"Logged in as {self.email}" if self.logged_in else "Playing without email"
+        tk.Label(self.container, text=who, font=("Segoe UI", 9), fg="#555",
+                 bg=BG).pack(anchor="w", pady=(0, 4))
+        bar = ttk.Progressbar(self.container, maximum=TOTAL, value=n)
+        bar.pack(fill="x", pady=(0, 12))
+
+        for i, lesson in enumerate(LESSONS):
+            row = tk.Frame(self.container, bg=CARD, highlightthickness=1,
+                           highlightbackground="#d8dde8")
+            row.pack(fill="x", pady=3)
+            tk.Label(row, text=f"{i + 1}. {lesson['title']}", font=FONT,
+                     bg=CARD, anchor="w").pack(side="left", padx=12, pady=8)
+            if i in self.passed:
+                tk.Label(row, text="[PASSED]", font=FONT_B, fg=GREEN,
+                         bg=CARD).pack(side="right", padx=8)
+            ttk.Button(row, text="Open",
+                       command=lambda i=i: self.show_lesson(i)).pack(
+                side="right", padx=8, pady=4)
+
+        bottom = tk.Frame(self.container, bg=BG)
+        bottom.pack(fill="x", pady=14)
+        self.button(bottom, "Get my certificate", self.show_certificate,
+                    accent=True, side="left")
+        self.button(bottom, "Exit", self.exit_game, side="right")
+        self.button(bottom, "Log out", self.logout, side="right", padx=8)
+
+    def exit_game(self):
+        n = len(self.passed)
+        messagebox.showinfo(
+            "Goodbye",
+            f"Goodbye, {self.player}!\nYou passed {n} of {TOTAL} lessons.\nRank: {get_rank(n)}")
+        self.destroy()
+
+    # ---------------- lesson ----------------
+    def show_lesson(self, i):
+        self.lesson_i = i
+        self.clear()
+        lesson = LESSONS[i]
+        self.heading(f"LESSON {i + 1}: {lesson['title'].upper()}")
+        box = scrolledtext.ScrolledText(self.container, font=MONO, wrap="word",
+                                        bg=CARD, relief="flat", padx=12, pady=10)
+        box.insert("1.0", lesson["notes"])
+        box.configure(state="disabled")
+        box.pack(fill="both", expand=True)
+        row = tk.Frame(self.container, bg=BG)
+        row.pack(fill="x", pady=10)
+        self.button(row, "Take the quiz", self.start_quiz, accent=True, side="left")
+        self.button(row, "Back to the menu", self.show_menu, side="right")
+
+    # ---------------- quiz ----------------
+    def start_quiz(self):
+        self.q_i = 0
+        self.score = 0
+        self.show_question()
+
+    def show_question(self):
+        self.clear()
+        lesson = LESSONS[self.lesson_i]
+        qs = lesson["questions"]
+        prompt, options, correct, hint = qs[self.q_i]
+
+        self.heading(f"LESSON {self.lesson_i + 1} QUIZ  -  Question "
+                     f"{self.q_i + 1} of {len(qs)}")
+        card = tk.Frame(self.container, bg=CARD, highlightthickness=1,
+                        highlightbackground="#d8dde8")
+        card.pack(fill="x", pady=6)
+        tk.Label(card, text=prompt, font=FONT_B, bg=CARD, justify="left",
+                 wraplength=700, anchor="w").pack(fill="x", padx=16, pady=(14, 8))
+
+        self.answer_var.set("")
+        self.entry = None
+        self.radios = []
+        if options:
+            for k, opt in enumerate(options, start=1):
+                rb = tk.Radiobutton(card, text=f"{k}) {opt}", variable=self.answer_var,
+                                    value=str(k), font=FONT, bg=CARD, anchor="w",
+                                    activebackground=CARD)
+                rb.pack(fill="x", padx=30, pady=2)
+                self.radios.append(rb)
+            tk.Frame(card, bg=CARD, height=10).pack()
+        else:
+            self.entry = ttk.Entry(card, font=FONT, textvariable=self.answer_var)
+            self.entry.pack(fill="x", padx=16, pady=(0, 16))
+            self.entry.focus()
+            self.entry.bind("<Return>", lambda e: self.check_answer())
+
+        self.feedback = tk.Label(self.container, text="", font=FONT_B, bg=BG,
+                                 wraplength=700, justify="left")
+        self.feedback.pack(anchor="w", pady=8)
+
+        row = tk.Frame(self.container, bg=BG)
+        row.pack(fill="x", pady=6)
+        self.submit_btn = ttk.Button(row, text="Submit answer",
+                                     command=self.check_answer, style="Accent.TButton")
+        self.submit_btn.pack(side="left")
+        self.next_btn = ttk.Button(row, text="Next", command=self.next_question)
+        tk.Label(row, text=f"Score: {self.score}", font=FONT, bg=BG).pack(side="right")
+
+    def check_answer(self):
+        if self.submit_btn["state"] == "disabled":
+            return
+        raw = self.answer_var.get()
+        if not raw.strip():
+            self.feedback.config(text="Please choose or type an answer first.", fg=RED)
+            return
+        _, options, correct, hint = LESSONS[self.lesson_i]["questions"][self.q_i]
+        if options:
+            ok = raw == correct
+        else:
+            cleaned = raw.strip().lower().replace(" ", "")
+            ok = cleaned in [c.lower().replace(" ", "") for c in correct]
+        if ok:
+            self.score += 1
+            self.feedback.config(text="Correct!", fg=GREEN)
+        else:
+            self.feedback.config(text=f"Wrong. Hint: {hint}", fg=RED)
+
+        self.submit_btn.config(state="disabled")
+        for rb in self.radios:
+            rb.config(state="disabled")
+        if self.entry is not None:
+            self.entry.config(state="disabled")
+        last = self.q_i == len(LESSONS[self.lesson_i]["questions"]) - 1
+        self.next_btn.config(text="See my score" if last else "Next")
+        self.next_btn.pack(side="left", padx=8)
+        self.next_btn.focus()
+
+    def next_question(self):
+        self.q_i += 1
+        if self.q_i >= len(LESSONS[self.lesson_i]["questions"]):
+            self.show_result()
+        else:
+            self.show_question()
+
+    def show_result(self):
+        self.clear()
+        total_q = len(LESSONS[self.lesson_i]["questions"])
+        perfect = self.score == total_q
+        self.heading(f"LESSON {self.lesson_i + 1} RESULT", GREEN if perfect else RED)
+        tk.Label(self.container, text=f"Score: {self.score} out of {total_q}",
+                 font=("Segoe UI", 16), bg=BG).pack(pady=10)
+        if perfect:
+            self.passed.add(self.lesson_i)
+            self.save_progress()
+            tk.Label(self.container,
+                     text=f"PERFECT! Lesson {self.lesson_i + 1} passed. Badge earned!",
+                     font=FONT_B, fg=GREEN, bg=BG).pack(pady=6)
+            if len(self.passed) == TOTAL:
+                tk.Label(self.container,
+                         text="You passed ALL lessons - your certificate is unlocked!",
+                         font=FONT_B, fg=GOLD, bg=BG).pack(pady=6)
+                self.auto_send_label = tk.Label(self.container, text="", font=FONT_B,
+                                                bg=BG, wraplength=700, justify="center")
+                self.auto_send_label.pack(pady=6)
+                if self.logged_in and not self.cert_sent:
+                    self.auto_send_label.config(
+                        text=f"Sending your certificate to {self.email} ...", fg="#555")
+                    self.update_idletasks()
+                    ok, why = self.send_certificate_email(
+                        self.email, self.email, self.app_password)
+                    if ok:
+                        self.cert_sent = True
+                        self.save_progress()
+                        self.auto_send_label.config(
+                            text=f"Certificate sent to {self.email}! "
+                                 "Check your inbox (and Spam).", fg=GREEN)
+                    else:
+                        self.auto_send_label.config(
+                            text=f"{why}\nYou can try again from 'Get my certificate'.",
+                            fg=RED)
+                elif self.logged_in and self.cert_sent:
+                    self.auto_send_label.config(
+                        text=f"Your certificate was already sent to {self.email}.",
+                        fg=GREEN)
+                else:
+                    self.auto_send_label.config(
+                        text="Open 'Get my certificate' to send it by email.", fg="#555")
+            self.button(self.container, "Back to the menu", self.show_menu,
+                        accent=True, pady=14)
+        else:
+            tk.Label(self.container, text="Not perfect yet. What do you want to do?",
+                     font=FONT, bg=BG).pack(pady=6)
+            self.button(self.container, "Retake the quiz", self.start_quiz,
+                        accent=True, pady=4)
+            self.button(self.container, "Review the lesson again",
+                        lambda: self.show_lesson(self.lesson_i), pady=4)
+            self.button(self.container, "Back to the menu", self.show_menu, pady=4)
+
+    # ---------------- certificate ----------------
+    def show_certificate(self):
+        self.clear()
+        if len(self.passed) < TOTAL:
+            left = TOTAL - len(self.passed)
+            self.heading("CERTIFICATE LOCKED", RED)
+            tk.Label(self.container,
+                     text=f"Not yet! Pass {left} more lesson(s) to unlock your certificate.",
+                     font=FONT, bg=BG).pack(pady=20)
+            self.button(self.container, "Back to the menu", self.show_menu, accent=True)
+            return
+
+        cert = tk.Frame(self.container, bg="#fffdf4", highlightthickness=4,
+                        highlightbackground=GOLD)
+        cert.pack(fill="x", pady=(0, 10), ipady=6)
+        tk.Label(cert, text="CERTIFICATE OF COMPLETION", font=("Georgia", 20, "bold"),
+                 fg=GOLD, bg="#fffdf4").pack(pady=(14, 4))
+        tk.Label(cert, text=self.player, font=("Georgia", 24, "bold italic"),
+                 bg="#fffdf4").pack(pady=4)
+        tk.Label(cert, text=f"passed all {TOTAL} lessons of the\nACT102 Python Quest and is now a",
+                 font=("Georgia", 12), bg="#fffdf4").pack()
+        tk.Label(cert, text="*** PYTHON MASTER ***", font=("Georgia", 16, "bold"),
+                 fg=ACCENT, bg="#fffdf4").pack(pady=(4, 12))
+
+        self.status = tk.Label(self.container, text="", font=FONT_B, bg=BG,
+                               wraplength=700, justify="left")
+
+        if self.logged_in:
+            # Logged in: the certificate goes to the Gmail used for login
+            if self.cert_sent:
+                msg = f"Your certificate was sent to {self.email}."
+                color = GREEN
+            else:
+                msg = f"Your certificate has not been sent yet to {self.email}."
+                color = "#555"
+            tk.Label(self.container, text=msg, font=FONT_B, fg=color,
+                     bg=BG, wraplength=700, justify="left").pack(anchor="w", pady=(6, 2))
+            self.status.pack(anchor="w", pady=4)
+            row = tk.Frame(self.container, bg=BG)
+            row.pack(fill="x", pady=6)
+            self.send_btn = ttk.Button(
+                row, text="Send again" if self.cert_sent else "Send to my Gmail",
+                style="Accent.TButton", command=self.send_logged_in)
+            self.send_btn.pack(side="left")
+            self.button(row, "Back to the menu", self.show_menu, side="right")
+            return
+
+        # Not logged in (played without email): ask for the Gmail details now
+        tk.Label(self.container, text="Send my certificate to Gmail",
+                 font=FONT_B, bg=BG).pack(anchor="w", pady=(6, 2))
+        form = tk.Frame(self.container, bg=BG)
+        form.pack(fill="x")
+        form.columnconfigure(1, weight=1)
+
+        def field(r, label, show=None):
+            tk.Label(form, text=label, font=FONT, bg=BG).grid(
+                row=r, column=0, sticky="w", pady=3, padx=(0, 10))
+            e = ttk.Entry(form, font=FONT, show=show)
+            e.grid(row=r, column=1, sticky="ew", pady=3)
+            return e
+
+        self.gmail_entry = field(0, "Your Gmail:")
+        self.pw2_entry = field(1, "Gmail App Password:", show="*")
+        tk.Label(self.container,
+                 text="Use a 16-character Google App Password (Google Account > Security >\n"
+                      "2-Step Verification > App passwords). It is used once and never saved.",
+                 font=("Segoe UI", 9), fg="#555", bg=BG, justify="left").pack(
+            anchor="w", pady=4)
+        self.status.pack(anchor="w", pady=4)
+        row = tk.Frame(self.container, bg=BG)
+        row.pack(fill="x", pady=6)
+        self.send_btn = ttk.Button(row, text="Send certificate", style="Accent.TButton",
+                                   command=self.send_manual)
+        self.send_btn.pack(side="left")
+        self.button(row, "Back to the menu", self.show_menu, side="right")
+
+    def send_logged_in(self):
+        self.send_btn.config(state="disabled")
+        self.status.config(text="Sending...", fg="#555")
+        self.update_idletasks()
+        ok, why = self.send_certificate_email(self.email, self.email, self.app_password)
+        if ok:
+            self.cert_sent = True
+            self.save_progress()
+            self.status.config(text=f"Sent! Check the inbox of {self.email} "
+                                    "(and the Spam folder).", fg=GREEN)
+        else:
+            self.status.config(text=why, fg=RED)
+        self.send_btn.config(state="normal")
+
+    def send_manual(self):
+        addr = self.gmail_entry.get().strip().lower()
+        password = self.pw2_entry.get().replace(" ", "")
+        if "@" not in addr or len(password) != 16:
+            self.status.config(text="Enter your Gmail and the 16-letter Google App "
+                                    "Password (not your normal password).", fg=RED)
+            return
+        self.send_btn.config(state="disabled")
+        self.status.config(text="Sending...", fg="#555")
+        self.update_idletasks()
+        ok, why = self.send_certificate_email(addr, addr, password)
+        if ok:
+            self.status.config(text=f"Sent! Check the inbox of {addr} "
+                                    "(and the Spam folder).", fg=GREEN)
+        else:
+            self.status.config(text=why, fg=RED)
+        self.send_btn.config(state="normal")
+
+
+if __name__ == "__main__":
+    PythonQuest().mainloop()
