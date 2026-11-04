@@ -1,0 +1,792 @@
+# =====================================================================
+# PYTHON QUEST - ACT102 Fundamentals of Programming
+# A lesson game: pick a lesson, pass its quiz, earn a [PASSED] badge,
+# and collect all 7 badges to unlock your certificate!
+#
+# Run it with:   python python_quest.py
+#
+# Only code from the lecture notes is used:
+# print, input, f-strings, if / elif / else, and / or / not,
+# for + range(), while True + break, and +=
+#
+# HOW THE PROGRAM IS BUILT (same pattern for every lesson):
+#   MENU LOOP      -> choose a lesson
+#     LESSON LOOP  -> shows the lesson notes (repeats if you choose Review)
+#       QUIZ LOOP  -> asks the questions (repeats if you choose Retake)
+# =====================================================================
+
+print("=======================================")
+print("            PYTHON QUEST")
+print("   Learn Python. Pass quizzes. Win badges.")
+print("=======================================")
+player = input("What is your name, adventurer? ")
+print(f"Welcome, {player}! Choose any lesson you like.")
+
+# Badge status of each lesson. It stays empty until the quiz is passed.
+status1 = ""
+status2 = ""
+status3 = ""
+status4 = ""
+status5 = ""
+status6 = ""
+status7 = ""
+passed = 0   # how many lessons are passed
+
+# ---------------------------------------------------------------------
+# MENU LOOP: keeps coming back here until the player chooses 0
+# ---------------------------------------------------------------------
+while True:
+    # The rank changes as the player passes more lessons
+    if passed == 7:
+        rank = "Python Master"
+    elif passed >= 4:
+        rank = "Coder"
+    elif passed >= 1:
+        rank = "Apprentice"
+    else:
+        rank = "Newbie"
+
+    print()
+    print("=============== LESSON MENU ===============")
+    print(f"Player: {player}   Rank: {rank}   Passed: {passed}/7")
+    print(f"1. Introduction to Programming   {status1}")
+    print(f"2. Python Basic Syntax           {status2}")
+    print(f"3. Variables and Data Types      {status3}")
+    print(f"4. Arithmetic Operators          {status4}")
+    print(f"5. Basic Input and Output        {status5}")
+    print(f"6. Conditions and Logic          {status6}")
+    print(f"7. Loops                         {status7}")
+    print("8. Get my certificate")
+    print("0. Exit")
+    choice = input("Pick a number: ")
+
+    # =================================================================
+    # LESSON 1: INTRODUCTION TO PROGRAMMING
+    # =================================================================
+    if choice == "1":
+        while True:                                   # LESSON LOOP
+            print()
+            print("---------- LESSON 1: INTRODUCTION ----------")
+            print("A programming language is a special language that")
+            print("computers understand and use to perform tasks.")
+            print()
+            print("Python   - easy to learn; data science, AI, automation")
+            print("C / C++  - high performance; system programming, games")
+            print("PHP      - web development; works with databases")
+            print("Java     - 'write once, run anywhere'; enterprise, Android apps")
+            print("JavaScript - the core language of the web (interactive sites)")
+            print("Ruby     - simple and productive; web frameworks like Rails")
+            print()
+            print("Python was created by Guido van Rossum in 1991.")
+            print("It is high-level, interpreted, and general-purpose.")
+            print()
+            print("Why learn Python?")
+            print("  - Simple and easy to learn")
+            print("  - Readable syntax (almost like plain English)")
+            print("  - Versatile (AI, web, automation, data science, games)")
+            print("  - Huge community")
+            print("Tools: PyCharm, Visual Studio Code (VS Code), Jupyter Notebook")
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:                               # QUIZ LOOP
+                score = 0
+                print()
+                print("---------- LESSON 1 QUIZ ----------")
+
+                print("Q1. Who created Python?")
+                print("  1) Bill Gates")
+                print("  2) Guido van Rossum")
+                print("  3) Steve Jobs")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: read 'Python was created by...'")
+
+                print()
+                print("Q2. Which language is the core language of the web?")
+                print("  1) JavaScript")
+                print("  2) C++")
+                print("  3) Ruby")
+                answer = input("Your answer: ")
+                if answer == "1":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: it adds interactivity to websites.")
+
+                print()
+                print("Q3. Which language is 'write once, run anywhere'?")
+                print("  1) PHP")
+                print("  2) Python")
+                print("  3) Java")
+                answer = input("Your answer: ")
+                if answer == "3":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: it is used for enterprise systems and Android apps.")
+
+                print()
+                print(f"Score: {score} out of 3")
+                if score == 3:
+                    print("PERFECT! Lesson 1 passed. Badge earned!")
+                    if status1 == "":
+                        passed += 1
+                    status1 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break                             # leave the QUIZ LOOP
+            if action != "2":
+                break                                 # leave the LESSON LOOP
+
+    # =================================================================
+    # LESSON 2: PYTHON BASIC SYNTAX
+    # =================================================================
+    elif choice == "2":
+        while True:
+            print()
+            print("---------- LESSON 2: BASIC SYNTAX ----------")
+            print("Syntax = the rules for writing a program correctly.")
+            print()
+            print("RULE 1: Python is CASE-SENSITIVE.")
+            print("Name and name are two different identifiers.")
+            Name = "Maria"
+            name = "Juan"
+            print(Name)
+            print(name)
+            print()
+            print("RULE 2: Python uses INDENTATION, not curly braces,")
+            print("to define blocks such as inside an if statement.")
+            print("  CORRECT:               WRONG:")
+            print("  age = 18               age = 18")
+            print("  if age >= 18:          if age >= 18:")
+            print('      print("Adult")    print("Adult")  <-- IndentationError')
+            print()
+            print("print() shows information on the screen.")
+            print("Strings need quotes. Numbers can be printed directly.")
+            print("Hello, World!")
+            print(100)
+            print()
+            print("COMMENTS: Python ignores them.")
+            print("  Single-line:  # This is a comment")
+            print('  Multi-line:   """ This is a multi-line comment """')
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 2 QUIZ ----------")
+
+                print("Q1. Are Name and name the same thing in Python?")
+                print("  1) Yes")
+                print("  2) No")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see RULE 1 (case-sensitive).")
+
+                print()
+                print("Q2. Type the symbol that starts a single-line comment.")
+                answer = input("Your answer: ")
+                if answer == "#":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see the COMMENTS part of the lesson.")
+
+                print()
+                print("Q3. What does Python use to define code blocks?")
+                print("  1) Semicolons")
+                print("  2) Indentation")
+                print("  3) Curly braces")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see RULE 2.")
+
+                print()
+                print(f"Score: {score} out of 3")
+                if score == 3:
+                    print("PERFECT! Lesson 2 passed. Badge earned!")
+                    if status2 == "":
+                        passed += 1
+                    status2 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # LESSON 3: VARIABLES AND DATA TYPES
+    # =================================================================
+    elif choice == "3":
+        while True:
+            print()
+            print("---------- LESSON 3: VARIABLES AND DATA TYPES ----------")
+            print("A variable is a named storage location that holds data.")
+            print("The value inside a variable can change.")
+            print()
+            print("Data types:")
+            print("  int   - whole numbers           age = 20")
+            print("  float - numbers with a decimal  grade = 89.5")
+            print('  str   - text inside quotes      name = "Maria"')
+            print("  bool  - True or False           is_enrolled = True")
+            print()
+            print("Running those four lines:")
+            age = 20
+            grade = 89.5
+            name = "Maria"
+            is_enrolled = True
+            print(age)
+            print(grade)
+            print(name)
+            print(is_enrolled)
+            print()
+            print("Variable naming rules:")
+            print("  - Must start with a letter or an underscore (_value)")
+            print("  - Cannot start with a number (1number is invalid)")
+            print("  - Cannot contain spaces or special characters like @ # $ %")
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 3 QUIZ ----------")
+
+                print("Q1. Which variable name is valid?")
+                print("  1) 1number")
+                print("  2) my name")
+                print("  3) _value")
+                answer = input("Your answer: ")
+                if answer == "3":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see 'Variable naming rules'.")
+
+                print()
+                print("Q2. In  grade = 89.5  what is the data type?")
+                print("    (type it in small letters: int, float, str or bool)")
+                answer = input("Your answer: ")
+                if answer == "float":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: it has a decimal point.")
+
+                print()
+                print("Q3. In  is_enrolled = True  what is the data type?")
+                answer = input("Your answer: ")
+                if answer == "bool":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: True and False are special values.")
+
+                print()
+                print('Q4. In  name = "Maria"  what is the data type?')
+                answer = input("Your answer: ")
+                if answer == "str":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: it is text inside quotes.")
+
+                print()
+                print(f"Score: {score} out of 4")
+                if score == 4:
+                    print("PERFECT! Lesson 3 passed. Badge earned!")
+                    if status3 == "":
+                        passed += 1
+                    status3 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # LESSON 4: ARITHMETIC OPERATORS
+    # =================================================================
+    elif choice == "4":
+        while True:
+            print()
+            print("---------- LESSON 4: ARITHMETIC OPERATORS ----------")
+            print("Operator   Operation              Example    Result")
+            print("   +       Addition               5 + 3      ", 5 + 3)
+            print("   -       Subtraction            10 - 4     ", 10 - 4)
+            print("   *       Multiplication         7 * 2      ", 7 * 2)
+            print("   /       Division (float)       15 / 3     ", 15 / 3)
+            print("   //      Floor division         17 // 3    ", 17 // 3)
+            print("   %       Modulus (remainder)    10 % 3     ", 10 % 3)
+            print("   **      Exponent (power)       2 ** 3     ", 2 ** 3)
+            print()
+            print("Python follows PEMDAS:")
+            print("Parentheses, Exponents, Multiplication/Division, Addition/Subtraction")
+            print("  2 + 3 * 4   =", 2 + 3 * 4)
+            print("  (2 + 3) * 4 =", (2 + 3) * 4)
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 4 QUIZ ----------")
+                print("(Type just the answer, like 7)")
+
+                print("Q1. What is  17 // 3 ?")
+                answer = input("Your answer: ")
+                if answer == "5":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: // is floor division (whole number only).")
+
+                print()
+                print("Q2. What is  10 % 3 ?")
+                answer = input("Your answer: ")
+                if answer == "1":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: % gives the remainder.")
+
+                print()
+                print("Q3. What is  2 ** 3 ?")
+                answer = input("Your answer: ")
+                if answer == "8":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: ** is the power: 2 * 2 * 2.")
+
+                print()
+                print("Q4. What is  2 + 3 * 4 ?")
+                answer = input("Your answer: ")
+                if answer == "14":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: PEMDAS - multiply before you add.")
+
+                print()
+                print(f"Score: {score} out of 4")
+                if score == 4:
+                    print("PERFECT! Lesson 4 passed. Badge earned!")
+                    if status4 == "":
+                        passed += 1
+                    status4 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # LESSON 5: BASIC INPUT AND OUTPUT
+    # =================================================================
+    elif choice == "5":
+        while True:
+            print()
+            print("---------- LESSON 5: INPUT AND OUTPUT ----------")
+            print("input() gets information from the user.")
+            print("It always gives you a string (str). To do math,")
+            print("convert it with int() or float().")
+            print()
+            print("The code from the lecture:")
+            print('  name = input("Enter your name: ")')
+            print('  age = int(input("Enter your age: "))')
+            print('  grade = float(input("Enter your final grade: "))')
+            print('  print(f"Student: {name}, Age: {age}, Grade: {grade}")')
+            print()
+            print("Try the first line yourself:")
+            name = input("Enter your name: ")
+            print(f"Student: {name}")
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 5 QUIZ ----------")
+                print("(Type your answers in small letters)")
+
+                print("Q1. What data type does input() always give you?")
+                print("    (int, float or str)")
+                answer = input("Your answer: ")
+                if answer == "str":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: by default, all input is a string.")
+
+                print()
+                print("Q2. Fill in the blank to read a whole number:")
+                print('    age = ____(input("Enter your age: "))')
+                answer = input("Your answer: ")
+                if answer == "int":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see the age line in the lecture code.")
+
+                print()
+                print("Q3. Fill in the blank to read a decimal number:")
+                print('    grade = ____(input("Enter your final grade: "))')
+                answer = input("Your answer: ")
+                if answer == "float":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see the grade line in the lecture code.")
+
+                print()
+                print(f"Score: {score} out of 3")
+                if score == 3:
+                    print("PERFECT! Lesson 5 passed. Badge earned!")
+                    if status5 == "":
+                        passed += 1
+                    status5 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # LESSON 6: CONDITIONS AND LOGIC
+    # =================================================================
+    elif choice == "6":
+        while True:
+            print()
+            print("---------- LESSON 6: CONDITIONS AND LOGIC ----------")
+            print("Conditional statements let a program make decisions.")
+            print()
+            print("Comparison operators:")
+            print("  ==  equal to          !=  not equal to")
+            print("  >   greater than      <   less than")
+            print("  >=  greater or equal  <=  less or equal")
+            print()
+            print("Logical operators:")
+            print("  and - True only if ALL conditions are True")
+            print("        True and True  =", True and True)
+            print("        True and False =", True and False)
+            print("  or  - True if AT LEAST ONE condition is True")
+            print("        False or True  =", False or True)
+            print("        False or False =", False or False)
+            print("  not - reverses the result")
+            print("        not True  =", not True)
+            print("        not False =", not False)
+            print()
+            print("The if - elif - else code from the lecture (with age = 15):")
+            age = 15
+            if age < 0 or age > 100:
+                print("Invalid input")
+            elif age <= 12:
+                print("Category: Child")
+            elif age <= 19:
+                print("Category: Teenager")
+            elif age <= 59:
+                print("Category: Adult")
+            else:
+                print("Category: Senior Citizen")
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 6 QUIZ ----------")
+
+                print("Q1. Which operator means 'not equal to'?")
+                print("  1) ==")
+                print("  2) !=")
+                print("  3) >=")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see 'Comparison operators'.")
+
+                print()
+                print("Q2. What is  True and False ?")
+                print("  1) True")
+                print("  2) False")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: 'and' needs ALL conditions to be True.")
+
+                print()
+                print("Q3. What is  False or True ?")
+                print("  1) True")
+                print("  2) False")
+                answer = input("Your answer: ")
+                if answer == "1":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: 'or' needs AT LEAST ONE True.")
+
+                print()
+                print("Q4. What is  not True ?")
+                print("  1) True")
+                print("  2) False")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: 'not' reverses the result.")
+
+                print()
+                print("Q5. With the lecture code, age = 15 gives which category?")
+                print("  1) Child")
+                print("  2) Adult")
+                print("  3) Teenager")
+                answer = input("Your answer: ")
+                if answer == "3":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: check which 'elif' is True first.")
+
+                print()
+                print(f"Score: {score} out of 5")
+                if score == 5:
+                    print("PERFECT! Lesson 6 passed. Badge earned!")
+                    if status6 == "":
+                        passed += 1
+                    status6 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # LESSON 7: LOOPS
+    # =================================================================
+    elif choice == "7":
+        while True:
+            print()
+            print("---------- LESSON 7: LOOPS ----------")
+            print("Iteration = repeating a block of code.")
+            print("  for loop   - when you know how many times to repeat")
+            print("  while loop - repeats as long as its condition is True")
+            print()
+            print("range(start, stop, step)  -  the stop number is NOT included.")
+            print()
+            print("for num in range(1, 6):        # numbers 1 to 5")
+            for num in range(1, 6):
+                print(num)
+            print()
+            print("for num in range(1, 10, 2):    # odd numbers 1 to 9")
+            for num in range(1, 10, 2):
+                print(num)
+            print()
+            print("for num in range(5, 0, -1):    # countdown 5 to 1")
+            for num in range(5, 0, -1):
+                print(num)
+            print()
+            print("while True runs forever until a break statement is hit.")
+            print("The running total code from the lecture:")
+            print("  total = 0")
+            print("  while True:")
+            print('      num = int(input("Enter an integer (0 to stop): "))')
+            print("      if num == 0:")
+            print("          break")
+            print("      total += num")
+            print('  print(f"Total: {total}")')
+            print()
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break                                 # leave the LESSON LOOP
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 7 QUIZ ----------")
+
+                print("Q1. What does  for num in range(1, 6)  print?")
+                print("  1) 1 to 5")
+                print("  2) 1 to 6")
+                print("  3) 0 to 5")
+                answer = input("Your answer: ")
+                if answer == "1":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: the stop number is not included.")
+
+                print()
+                print("Q2. What does  range(1, 10, 2)  give?")
+                print("  1) 2, 4, 6, 8")
+                print("  2) 1, 3, 5, 7, 9")
+                print("  3) 1 to 10")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: start at 1, then step by 2.")
+
+                print()
+                print("Q3. Which keyword stops a  while True  loop?")
+                answer = input("Your answer: ")
+                if answer == "break":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: it is in the running total code.")
+
+                print()
+                print("Q4. In the running total code, you type 4, then 6,")
+                print("    then 10, then 0. What is the Total?")
+                answer = input("Your answer: ")
+                if answer == "20":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: 0 stops the loop and is not added.")
+
+                print()
+                print("Q5. Type the range() that counts down from 10 to 1.")
+                print("    Example format: range(1, 6)")
+                answer = input("Your answer: ")
+                if answer == "range(10, 0, -1)" or answer == "range(10,0,-1)":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong. Hint: see the countdown 5 to 1 example.")
+
+                print()
+                print(f"Score: {score} out of 5")
+                if score == 5:
+                    print("PERFECT! Lesson 7 passed. Badge earned!")
+                    if status7 == "":
+                        passed += 1
+                    status7 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
+
+    # =================================================================
+    # CERTIFICATE (unlocked after all 7 lessons are passed)
+    # =================================================================
+    elif choice == "8":
+        if passed == 7:
+            print()
+            print("**************************************************")
+            print("            CERTIFICATE OF COMPLETION")
+            print()
+            print(f"   {player}")
+            print("   passed all 7 lessons of the")
+            print("   ACT102 Python Quest and is now a")
+            print("   *** PYTHON MASTER ***")
+            print("**************************************************")
+            print("Take a screenshot of this as your proof!")
+        else:
+            left = 7 - passed
+            print(f"Not yet! Pass {left} more lesson(s) to unlock your certificate.")
+
+    # =================================================================
+    # EXIT
+    # =================================================================
+    elif choice == "0":
+        print()
+        print(f"Goodbye, {player}! You passed {passed} of 7 lessons. Rank: {rank}")
+        break
+
+    else:
+        print("Please type a number from the menu.")
