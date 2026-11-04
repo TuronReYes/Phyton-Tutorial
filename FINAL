@@ -1,0 +1,129 @@
+print("=================================================")
+print("               PYTHON JOURNEY!")
+print("   Learn Python. Pass quizzes. Win Certificate.")
+print("==================================================")
+player = input("\nWhat is your name?: ")
+print(f"Welcome, {player}! Choose any lesson you like.")
+
+status1 = ""
+status2 = ""
+status3 = ""
+status4 = ""
+status5 = ""
+status6 = ""
+status7 = ""
+passed = 0
+
+while True:
+
+    if passed == 7:
+        rank = "Python Master"
+    elif passed >= 4:
+        rank = "Coder"
+    else:
+        rank = "Newbie"
+
+    print()
+    print("=============== LESSON MENU ===============")
+    print(f"Player: {player}   Rank: {rank}   Passed: {passed}/7")
+    print(f"1. Introduction to Programming   {status1}")
+    print(f"2. Python Basic Syntax           {status2}")
+    print(f"3. Variables and Data Types      {status3}")
+    print(f"4. Arithmetic Operators          {status4}")
+    print(f"5. Basic Input and Output        {status5}")
+    print(f"6. Conditions and Logic          {status6}")
+    print(f"7. Loops                         {status7}")
+    print("8. Get my certificate")
+    print("0. Exit")
+    choice = input("Pick a number: ")
+
+    if choice == "1":
+        while True:
+            print("\n=======================================")
+            print("LESSON 1: INTRODUCTION TO PROGRAMMING")
+            print("=======================================")
+            print()
+            print("What is Phyton Programming?")
+            print("Python is a widely-used programming language and Python is a popular programming language")
+            print()
+            print("Who Created Phyton?")
+            print("Phyton is create by Guido van Rossum in 1991.")
+            print("A dutch software engineer best known for creating the Python programming language in 1991 ")
+            print()
+            print("What his motive for creating Phyton?")
+            print("His motive is, he designed Python with the goal of making programming")
+            print("simple, readable, and easy to learn while remaining powerful enough for professional software development.")
+            print()
+            print("Why learn Python?")
+            print("  - Simple and easy to learn")
+            print("  - Readable syntax (almost like plain English)")
+            print("  - Versatile (AI, web, automation, data science, games)")
+            print("  - Huge community")
+            print("Tools: PyCharm, Visual Studio Code (VS Code), Jupyter Notebook")
+            print()
+
+            print("What do you want to do?")
+            print("  1) Take the quiz")
+            print("  2) Back to the menu")
+            action = input("Your choice: ")
+            if action != "1":
+                break
+
+            while True:
+                score = 0
+                print()
+                print("---------- LESSON 1 QUIZ ----------")
+
+                print("Q1. Who created Python?")
+                print("  1) Bill Gates")
+                print("  2) Guido van Rossum")
+                print("  3) Steve Jobs")
+                answer = input("Your answer: ")
+                if answer == "2":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong.")
+
+                print()
+                print("Q2. When was the Phyton Created?")
+                print("  1) 1991")
+                print("  2) 1992")
+                print("  3) 1993")
+                answer = input("Your answer: ")
+                if answer == "1":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong.")
+
+                print()
+                print("Q3. What motives Guido van Rossum gave his idea for creating Phyton?")
+                print("  1) To make the synthax harder and complicated.")
+                print("  2) To make the phyton unique for other programming languanges.")
+                print("  3) To make the programming simple, readable, and easy to learn.")
+                answer = input("Your answer: ")
+                if answer == "3":
+                    print("Correct!")
+                    score += 1
+                else:
+                    print("Wrong.")
+
+                print()
+                print(f"Score: {score} out of 3")
+                if score == 3:
+                    print("PERFECT! Lesson 1 passed. Badge earned!")
+                    if status1 == "":
+                        passed += 1
+                    status1 = "[PASSED]"
+                    action = "done"
+                    break
+                print("Not perfect yet. What do you want to do?")
+                print("  1) Retake the quiz")
+                print("  2) Review the lesson again")
+                print("  3) Back to the menu")
+                action = input("Your choice: ")
+                if action != "1":
+                    break
+            if action != "2":
+                break
